@@ -13,26 +13,27 @@ postulate
 
 {-# BUILTIN STRING string #-}
 
-
 data D : Set where
-    a : D 
+    d : D 
     
-
-data formula : Set where  --definicja 1.5
-    var : string → formula
-    varneq : string → formula
-    Truee : formula 
-    And : formula → formula → formula
-    Or : formula → formula → formula
-    ⋄ : D → formula → formula
-    □ : D → formula → formula
-
 
 record struct : Set1 where
     field   W         : Set 
             R         : W → D → W → 𝔹
             V         : string → W → 𝔹
 open struct
+
+
+
+
+data formula : Set where  --definicja 1.5
+    var : string → formula 
+    varneq : string → formula 
+    Truee : formula 
+    And : formula → formula → formula 
+    Or : formula → formula → formula 
+    ⋄ : D → formula → formula 
+    □ : D → formula → formula 
 
 
 
@@ -43,7 +44,7 @@ data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
     B4 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ ψ → k , s ⊨ And ϕ ψ
     B5 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ ψ : formula ) → k , s ⊨ ψ → k , s ⊨ Or ϕ ψ
     B6 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ Or ϕ ψ
-    B7 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ : formula ) → ∀ ( d : D ) → ( ∀ (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
+    B7 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ : formula ) → ∀ ( d : D ) → (∀  (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
     B8 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ : formula ) → ∀ ( d : D ) → ( t : W k ) → ( R k ) s d t ≡ tt →  k , t ⊨ ϕ →  k , s ⊨ ⋄ d ϕ
 
 -- _,_⊨ᵇ_ : (k : struct) -> W k -> formula -> 𝔹
@@ -81,54 +82,125 @@ data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S'
 
 
 
-data World : Set where
-    w0 : World
-    w1 : World
-    w2 : World
+module ⊨-example1 where
+
+    data World : Set where
+        w0 : World
+        w1 : World
+        w2 : World
+
+    Rel : World → D → World → 𝔹
+    Rel w0 d w0 = ff
+    Rel w0 d w1 = tt
+    Rel w0 d w2 = ff 
+    Rel w1 d w0 = ff
+    Rel w1 d w1 = ff
+    Rel w1 d w2 = tt
+    Rel w2 d w0 = tt
+    Rel w2 d w1 = ff 
+    Rel w2 d w2 = tt 
+
+    Val : string → World → 𝔹 
+    Val "p" w0 = tt 
+    Val "q" w0 = ff
+    Val "p" w1 = ff 
+    Val "q" w1 = tt
+    Val "p" w2 = tt 
+    Val "q" w2 = tt
+    Val _ _ = ff
+
+    S : struct
+    S = record { W = World ; R = Rel ; V = Val }
+
+    _ : S , w0 ⊨ ( var "p" )
+    _ = B1 S w0 "p" refl
+
+    _ : S , w1 ⊨ (varneq "p")
+    _ = B2 S w1 "p" refl
+
+    _ : S , w0 ⊨ Truee
+    _ = B3 S w0
+
+    _ : S , w2 ⊨ And (var "p") (var "q")
+    _ = B4 S w2 (var "p") (var "q") (B1 S w2 "p" refl) (B1 S w2 "q" refl)
+
+    _ : S , w0 ⊨ Or (var "p") (var "q")
+    _ = B6 S w0 (var "p") (var "q") (B1 S w0 "p" refl) 
+
+    _ : S , w2 ⊨ ⋄ d (var "p")
+    _ = B8 S w2 (var "p") d w0 refl (B1 S w0 "p" refl)
+
+    _ : S , w1 ⊨ □ d (var "q")
+    _ = B7 S w1 (var "q") d λ t x → B1 S t "q" {! !} 
 
 
-Rel :  World → D → World → 𝔹
-Rel w0 a w0 = ff
-Rel w0 a w1 = tt
-Rel w0 a w2 = ff 
-Rel w1 a w0 = ff
-Rel w1 a w1 = ff
-Rel w1 a w2 = tt
-Rel w2 a w0 = tt
-Rel w2 a w1 = ff 
-Rel w2 a w2 = tt 
 
-Val : string → World → 𝔹 
-Val "p" w0 = tt 
-Val "q" w0 = ff
-Val "p" w1 = ff 
-Val "q" w1 = tt
-Val "p" w2 = tt 
-Val "q" w2 = tt
-Val _ _ = ff
+module ⊨-example2 where
 
-    
-S : struct
-S = record { W = World ; R = Rel ; V = Val }
+    data World : Set where
+        w0 : World
+        w1 : World
+        w2 : World
+        w3 : World
+        w4 : World
 
+    Rel : World → D → World → 𝔹
+    Rel w0 d w0 = ff
+    Rel w0 d w1 = tt
+    Rel w0 d w2 = tt
+    Rel w0 d w3 = ff
+    Rel w0 d w4 = ff 
+    Rel w1 d w0 = ff
+    Rel w1 d w1 = ff
+    Rel w1 d w2 = tt
+    Rel w1 d w3 = ff
+    Rel w1 d w4 = ff
+    Rel w2 d w0 = ff
+    Rel w2 d w1 = ff 
+    Rel w2 d w2 = ff 
+    Rel w2 d w3 = ff 
+    Rel w2 d w4 = ff
+    Rel w3 d w0 = ff
+    Rel w3 d w1 = ff
+    Rel w3 d w2 = tt
+    Rel w3 d w3 = ff
+    Rel w3 d w4 = tt
+    Rel w4 d w0 = tt
+    Rel w4 d w1 = ff 
+    Rel w4 d w2 = tt 
+    Rel w4 d w3 = ff 
+    Rel w4 d w4 = tt 
 
-example1 : S , w0 ⊨ ( var "p" )
-example1 = B1 S w0 "p" refl
+    Val : string → World → 𝔹 
+    Val "p" w0 = tt 
+    Val "q" w0 = ff
+    Val "r" w0 = ff
+    Val "p" w1 = ff 
+    Val "q" w1 = tt
+    Val "r" w1 = ff
+    Val "p" w2 = tt 
+    Val "q" w2 = tt
+    Val "r" w2 = tt
+    Val "p" w3 = ff 
+    Val "q" w3 = tt
+    Val "r" w3 = tt
+    Val "p" w4 = tt 
+    Val "q" w4 = ff
+    Val "r" w4 = tt
+    Val _ _ = ff
 
-example2 : S , w1 ⊨ (varneq "p")
-example2 = B2 S w1 "p" refl
+    S : struct
+    S = record { W = World ; R = Rel ; V = Val }
 
-example3 : S , w0 ⊨ Truee
-example3 = B3 S w0
+    _ : S , w0 ⊨ Or (var "p") (var "q")
+    _ = B6 S w0 (var "p") (var "q")  (B1 S w0 "p" refl)
 
-example4 : S , w2 ⊨ And (var "p") (var "q")
-example4 = B4 S w2 (var "p") (var "q") (B1 S w2 "p" refl) (B1 S w2 "q" refl)
+    _ : S , w1 ⊨ And (⋄ d (var "q")) (var "q")
+    _ = B4 S w1 (⋄ d (var "q")) (var "q") (B8 S w1 (var "q") d w2 refl (B1 S w2 "q" refl)) (B1 S w1 "q" refl)
 
-example5 : S , w0 ⊨ Or (var "p") (var "q")
-example5 = B6 S w0 (var "p") (var "q") (B1 S w0 "p" refl) 
+    _ : S , w2 ⊨ □ d (var "q")
+    _ = B7 S w2 (var "q") d λ t x → B1 S t "q" {!  !}
 
-example6 : S , w2 ⊨ ⋄ a (var "p")
-example6 = B8 S w2 (var "p") a w0 refl (B1 S w0 "p" refl)
-
-example7 : S , w1 ⊨ □ a (var "q")
-example7 = B7 S w1 (var "q") a λ t x → B1 S t "q" {! (V S) "q" t ≡ tt !} 
+    _ : S , w3 ⊨ Or ( And (var "p") (var "q") ) ( And (var "q") (var "r") )
+    _ = B5 S w3 (And (var "p") (var "q")) (And (var "q") (var "r")) (B4 S w3 (var "q") (var "r") (B1 S w3 "q" refl) (B1 S w3 "r" refl))
+ 
