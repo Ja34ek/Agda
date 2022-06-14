@@ -59,26 +59,45 @@ data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
 
 
 data _,_≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    var1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣' S' , s'
+    proof≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣' S' , s'
+
+data _,_≣'reverse_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
+    proof≣'reverse : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣' S' , s' → ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣'reverse S' , s'
+
 
 
 data _,_≣_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    var1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ≣' S' , s' →  S' , s' ≣' S , s → S , s ≣ S' , s'
+    proof≣ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ≣' S' , s' →  S' , s' ≣' S , s → S , s ≣ S' , s'
+
+postulate
+    ≣→≣'1 : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (S , s ≣ S' , s') → (S , s ≣' S' , s') 
+    ≣→≣'2 : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (S , s ≣ S' , s') → (S' , s' ≣' S , s) 
+    ≣'reverse1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣' S' , s' → ∀ ( ϕ : formula ) → S , s ⊨ ϕ
+    ≣'reverse2 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S' , s' ≣' S , s → ∀ ( ϕ : formula ) → S' , s' ⊨ ϕ
+    ⊨reverse : ( S : struct ) → ( s : W S ) → ( p : string ) → S , s ⊨ var p → ( V S ) p s ≡ tt
+
+
+data _,_≣→≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
+    proof≣→≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣ S' , s' →  S' , s' ≣' S , s →  S , s ≣→≣' S' , s'
+
+data _,_prop1_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
+    proofp1 :  ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (( V S ) p s ) ≡ tt → ( V S' ) p s'  ≡ tt → S , s prop1 S' , s'
 
 data _,_prop_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    var1 :  ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → ((( V S ) p s ) iff (( V S' ) p s' )) ≡ tt → S , s prop S' , s'
+    proofp :  ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → S , s prop1 S' , s' → S' , s' prop1 S , s → S , s prop S' , s'
 
 data _,_forth_,_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → Set where
-    var1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ∀ (t : W S ) → ( R S ) s d t ≡ tt → (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t , t') ∈ Z → S , s forth S' , s' , Z
+    prooff : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ∀ (t : W S ) → ( R S ) s d t ≡ tt → (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t , t') ∈ Z → S , s forth S' , s' , Z
 
 data _,_back_,_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → Set where
-    var1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ∀ (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t : W S ) → ( R S ) s d t ≡ tt → (t , t') ∈ Z → S , s back S' , s' , Z
+    proofb : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ∀ (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t : W S ) → ( R S ) s d t ≡ tt → (t , t') ∈ Z → S , s back S' , s' , Z
 
 data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    v1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (Z : List ( (W S) × (W S') )) → S , s prop S' , s' → S , s forth S' , s' , Z → S , s back S' , s' , Z → S , s ↔ S' , s'
+    proof↔ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (Z : List ( (W S) × (W S') )) → S , s prop S' , s' → S , s forth S' , s' , Z → S , s back S' , s' , Z → S , s ↔ S' , s'
 
--- H-M_theorem 
 
+←H-M_theoremₚ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → S , s ≣ S' , s' → S , s prop S' , s'
+←H-M_theoremₚ = λ S s S' s' x → proofp S S' s s' "p" (proofp1 S S' s s' "p" ( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ) (( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ))) ((proofp1 S' S s' s "p" ( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ) (( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ))))
 
 
 
