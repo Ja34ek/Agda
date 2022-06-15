@@ -62,13 +62,13 @@ data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
 --Nawiasy do sprawdzenia we wszystkich ≣ !!!
 
 data _,_≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    proof≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣' S' , s'
+    proof≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ( ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ ) → S , s ≣' S' , s'
 
 data _,_≣'reverse_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    proof≣'reverse : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣' S' , s' → ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣'reverse S' , s'
+    proof≣'reverse : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣' S' , s' → ( ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ ) → S , s ≣'reverse S' , s'
 
 data _,_≣_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    proof≣ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ≣' S' , s' →  S' , s' ≣' S , s → S , s ≣ S' , s'
+    proof≣ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (∀ ( ϕ : formula ) → S , s ≣' S' , s' →  S' , s' ≣' S , s ) → S , s ≣ S' , s'
 
 data _,_≣→≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proof≣→≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣ S' , s' →  S' , s' ≣' S , s →  S , s ≣→≣' S' , s'
@@ -112,7 +112,7 @@ data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S'
 
 --Dowód w "→" stronę
 →H-M_theorem : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → S , s ↔ S' , s' → S , s ≣ S' , s'
-→H-M_theorem = λ S s S' s' x → proof≣ S S' s s' {!   !} (proof≣' S S' s s' {!   !} {!   !} {!   !}) (proof≣' S' S s' s {!   !} {!   !} {!   !})
+→H-M_theorem = λ S s S' s' x → proof≣ S S' s s' (λ ϕ x₁ → proof≣' S' S s' s λ ϕ₁ x₂ → ≣'reverse1 S S' s s' x₁ ϕ₁)
 
 module ⊨-example1 where
 
