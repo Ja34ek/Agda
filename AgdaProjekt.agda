@@ -38,14 +38,15 @@ data formula : Set where  --definicja 1.5
 
 
 data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
-    B1 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( p : string ) → ( V k ) p s ≡ tt → k , s ⊨ var p
-    B2 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( p : string ) → ( V k ) p s ≡ ff → k , s ⊨ varneq p --nawiasy sprawdzić
-    B3 : ∀ ( k : struct ) → ∀ ( s : W k ) → k , s ⊨ Truee
-    B4 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ ψ → k , s ⊨ And ϕ ψ
-    B5 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ ψ : formula ) → k , s ⊨ ψ → k , s ⊨ Or ϕ ψ
-    B6 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ Or ϕ ψ
-    B7 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ : formula ) → ∀ ( d : D ) → (∀  (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
-    B8 : ∀ ( k : struct ) → ∀ ( s : W k ) → ∀ ( ϕ : formula ) → ∀ ( d : D ) → ( t : W k ) → ( R k ) s d t ≡ tt →  k , t ⊨ ϕ →  k , s ⊨ ⋄ d ϕ
+    proofvar : ( k : struct ) → ( s : W k ) → ( p : string ) → ( V k ) p s ≡ tt → k , s ⊨ var p
+    proofvarneq : ( k : struct ) → ( s : W k ) → ( p : string ) → ( V k ) p s ≡ ff → k , s ⊨ varneq p --nawiasy sprawdzić
+    proofTruee : ( k : struct ) → ( s : W k ) → k , s ⊨ Truee
+    proofAnd : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ ψ → k , s ⊨ And ϕ ψ
+    proofOr1 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ Or ϕ ψ
+    proofOr2 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ψ → k , s ⊨ Or ϕ ψ
+    proof⋄ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → ( t : W k ) → ( R k ) s d t ≡ tt →  k , t ⊨ ϕ →  k , s ⊨ ⋄ d ϕ
+    proof□ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → (∀  (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
+
 
 -- _,_⊨ᵇ_ : (k : struct) -> W k -> formula -> 𝔹
 -- S , s ⊨ᵇ var x = V S x s
@@ -58,16 +59,19 @@ data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
 -- ...         | ff ( ∀ (t : W S ) → ( R S ) s x t ≡ tt ) = ?
 
 
+--Nawiasy do sprawdzenia we wszystkich ≣ !!!
+
 data _,_≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proof≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣' S' , s'
 
 data _,_≣'reverse_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proof≣'reverse : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣' S' , s' → ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ → S , s ≣'reverse S' , s'
 
-
-
 data _,_≣_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proof≣ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) →  ∀ ( ϕ : formula ) → S , s ≣' S' , s' →  S' , s' ≣' S , s → S , s ≣ S' , s'
+
+data _,_≣→≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
+    proof≣→≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣ S' , s' →  S' , s' ≣' S , s →  S , s ≣→≣' S' , s'
 
 postulate
     ≣→≣'1 : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (S , s ≣ S' , s') → (S , s ≣' S' , s') 
@@ -75,10 +79,6 @@ postulate
     ≣'reverse1 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣' S' , s' → ∀ ( ϕ : formula ) → S , s ⊨ ϕ
     ≣'reverse2 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S' , s' ≣' S , s → ∀ ( ϕ : formula ) → S' , s' ⊨ ϕ
     ⊨reverse : ( S : struct ) → ( s : W S ) → ( p : string ) → S , s ⊨ var p → ( V S ) p s ≡ tt
-
-
-data _,_≣→≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    proof≣→≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S , s ≣ S' , s' →  S' , s' ≣' S , s →  S , s ≣→≣' S' , s'
 
 data _,_prop1_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proofp1 :  ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (( V S ) p s ) ≡ tt → ( V S' ) p s'  ≡ tt → S , s prop1 S' , s'
@@ -96,12 +96,23 @@ data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S'
     proof↔ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (Z : List ( (W S) × (W S') )) → S , s prop S' , s' → S , s forth S' , s' , Z → S , s back S' , s' , Z → S , s ↔ S' , s'
 
 
+--Dowód w "←" stronę
+--A
 ←H-M_theorem_prop : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → S , s ≣ S' , s' → S , s prop S' , s'
 ←H-M_theorem_prop = λ S s S' s' x → proofp S S' s s' "p" (proofp1 S S' s s' "p" ( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ) (( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ))) ((proofp1 S' S s' s "p" ( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ) (( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ))))
 
+--B
 ←H-M_theorem_forth : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → S , s ≣ S' , s' → S , s forth S' , s' , Z
 ←H-M_theorem_forth = λ S s S' s' Z x → prooff S S' s s' Z d {! !} {! !} {! !} {! !} {! !}  
 
+--C
+←H-M_theorem_back : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → S , s ≣ S' , s' → S , s back S' , s' , Z
+←H-M_theorem_back = λ S s S' s' Z x → {!   !}
+
+
+--Dowód w "→" stronę
+→H-M_theorem : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → S , s ↔ S' , s' → S , s ≣ S' , s'
+→H-M_theorem = λ S s S' s' x → proof≣ S S' s s' {!   !} (proof≣' S S' s s' {!   !} {!   !} {!   !}) (proof≣' S' S s' s {!   !} {!   !} {!   !})
 
 module ⊨-example1 where
 
@@ -134,25 +145,25 @@ module ⊨-example1 where
     S = record { W = World ; R = Rel ; V = Val }
 
     _ : S , w0 ⊨ ( var "p" )
-    _ = B1 S w0 "p" refl
+    _ = proofvar S w0 "p" refl
 
     _ : S , w1 ⊨ (varneq "p")
-    _ = B2 S w1 "p" refl
+    _ = proofvarneq S w1 "p" refl
 
     _ : S , w0 ⊨ Truee
-    _ = B3 S w0
+    _ = proofTruee S w0
 
     _ : S , w2 ⊨ And (var "p") (var "q")
-    _ = B4 S w2 (var "p") (var "q") (B1 S w2 "p" refl) (B1 S w2 "q" refl)
+    _ = proofAnd S w2 (var "p") (var "q") (proofvar S w2 "p" refl) (proofvar S w2 "q" refl)
 
     _ : S , w0 ⊨ Or (var "p") (var "q")
-    _ = B6 S w0 (var "p") (var "q") (B1 S w0 "p" refl) 
+    _ = proofOr1 S w0 (var "p") (var "q") (proofvar S w0 "p" refl) 
 
     _ : S , w2 ⊨ ⋄ d (var "p")
-    _ = B8 S w2 (var "p") d w0 refl (B1 S w0 "p" refl)
+    _ = proof⋄ S w2 (var "p") d w0 refl (proofvar S w0 "p" refl)
 
     _ : S , w1 ⊨ □ d (var "q")
-    _ = B7 S w1 (var "q") d λ t x → B1 S t "q" {! !} 
+    _ = proof□ S w1 (var "q") d λ t x → proofvar S t "q" {!   !} 
 
 
 
@@ -214,14 +225,14 @@ module ⊨-example2 where
     S = record { W = World ; R = Rel ; V = Val }
 
     _ : S , w0 ⊨ Or (var "p") (var "q")
-    _ = B6 S w0 (var "p") (var "q")  (B1 S w0 "p" refl)
+    _ = proofOr1 S w0 (var "p") (var "q")  (proofvar S w0 "p" refl)
 
     _ : S , w1 ⊨ And (⋄ d (var "q")) (var "q")
-    _ = B4 S w1 (⋄ d (var "q")) (var "q") (B8 S w1 (var "q") d w2 refl (B1 S w2 "q" refl)) (B1 S w1 "q" refl)
+    _ = proofAnd S w1 (⋄ d (var "q")) (var "q") (proof⋄ S w1 (var "q") d w2 refl (proofvar S w2 "q" refl)) (proofvar S w1 "q" refl)
 
     _ : S , w2 ⊨ □ d (var "q")
-    _ = B7 S w2 (var "q") d λ t x → B1 S t "q" {!  !}
+    _ = proof□ S w2 (var "q") d λ t x → proofvar S t "q" {!   !}
 
     _ : S , w3 ⊨ Or ( And (var "p") (var "q") ) ( And (var "q") (var "r") )
-    _ = B5 S w3 (And (var "p") (var "q")) (And (var "q") (var "r")) (B4 S w3 (var "q") (var "r") (B1 S w3 "q" refl) (B1 S w3 "r" refl))
+    _ = proofOr2 S w3 (And (var "p") (var "q")) (And (var "q") (var "r")) (proofAnd S w3 (var "q") (var "r") (proofvar S w3 "q" refl) (proofvar S w3 "r" refl))
  
