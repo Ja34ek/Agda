@@ -45,7 +45,7 @@ data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
     proofOr1 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ Or ϕ ψ
     proofOr2 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ψ → k , s ⊨ Or ϕ ψ
     proof⋄ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → ( t : W k ) → ( R k ) s d t ≡ tt →  k , t ⊨ ϕ →  k , s ⊨ ⋄ d ϕ
-    proof□ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → (∀  (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
+    proof□ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → ( ∀ (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
 
 
 -- _,_⊨ᵇ_ : (k : struct) -> W k -> formula -> 𝔹
@@ -87,10 +87,10 @@ data _,_prop_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S
     proofp :  ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → S , s prop1 S' , s' → S' , s' prop1 S , s → S , s prop S' , s'
 
 data _,_forth_,_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → Set where
-    prooff : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) →  ∀ (t : W S ) → ( R S ) s d t ≡ tt  → (t' : W S' ) → ( R S' ) s' d t' ≡ tt  → (t , t') ∈ Z → S , s forth S' , s' , Z
+    prooff : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ( ∀ (t : W S ) → ( R S ) s d t ≡ tt → (t' : W S' ) → ( R S' ) s' d t' ≡ tt  → (t , t') ∈ Z ) → S , s forth S' , s' , Z
 
 data _,_back_,_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → Set where
-    proofb : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) →  ∀ (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t : W S ) → ( R S ) s d t ≡ tt → (t , t') ∈ Z → S , s back S' , s' , Z
+    proofb : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ( ∀ (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t : W S ) → ( R S ) s d t ≡ tt → (t , t') ∈ Z ) → S , s back S' , s' , Z
 
 data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proof↔ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (Z : List ( (W S) × (W S') )) → S , s prop S' , s' → S , s forth S' , s' , Z → S , s back S' , s' , Z → S , s ↔ S' , s'
@@ -103,11 +103,12 @@ data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S'
 
 --B
 ←H-M_theorem_forth : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → S , s ≣ S' , s' → S , s forth S' , s' , Z
-←H-M_theorem_forth = λ S s S' s' Z x → prooff S S' s s' Z d {! !} {! !} {! !} {! !} {! !}  
+←H-M_theorem_forth = λ S s S' s' Z x → prooff S S' s s' Z d (λ t x₁ t' x₂ → {!   !})
+-- ←H-M_theorem_forth = λ S s S' s' Z x → prooff S S' s s' Z d {! !} {! !} {! !} {! !} {! !}  
 
 --C
 ←H-M_theorem_back : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → S , s ≣ S' , s' → S , s back S' , s' , Z
-←H-M_theorem_back = λ S s S' s' Z x → {!   !}
+←H-M_theorem_back = λ S s S' s' Z x →  proofb S S' s s' Z d λ t' x₁ t x₂ → {!   !} 
 
 
 --Dowód w "→" stronę
@@ -162,8 +163,11 @@ module ⊨-example1 where
     _ : S , w2 ⊨ ⋄ d (var "p")
     _ = proof⋄ S w2 (var "p") d w0 refl (proofvar S w0 "p" refl)
 
+    lemma : ∀ (t : World ) → Rel w1 d t ≡ tt → Val "q" t ≡ tt
+    lemma w2 x = refl
+ 
     _ : S , w1 ⊨ □ d (var "q")
-    _ = proof□ S w1 (var "q") d λ t x → proofvar S t "q" {!   !} 
+    _ = proof□ S w1 (var "q") d λ t x → proofvar S t "q" (lemma t x) 
 
 
 
@@ -230,8 +234,13 @@ module ⊨-example2 where
     _ : S , w1 ⊨ And (⋄ d (var "q")) (var "q")
     _ = proofAnd S w1 (⋄ d (var "q")) (var "q") (proof⋄ S w1 (var "q") d w2 refl (proofvar S w2 "q" refl)) (proofvar S w1 "q" refl)
 
+    lemma : ∀ (t : World ) → Rel w2 d t ≡ tt → Val "q" t ≡ tt
+    lemma w1 x = refl
+    lemma w2 x = refl
+    lemma w3 x = refl
+
     _ : S , w2 ⊨ □ d (var "q")
-    _ = proof□ S w2 (var "q") d λ t x → proofvar S t "q" {!   !}
+    _ = proof□ S w2 (var "q") d λ t x → proofvar S t "q" (lemma t x)
 
     _ : S , w3 ⊨ Or ( And (var "p") (var "q") ) ( And (var "q") (var "r") )
     _ = proofOr2 S w3 (And (var "p") (var "q")) (And (var "q") (var "r")) (proofAnd S w3 (var "q") (var "r") (proofvar S w3 "q" refl) (proofvar S w3 "r" refl))
