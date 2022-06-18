@@ -48,19 +48,6 @@ data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
     proof□ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → ( ∀ (t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
 
 
--- _,_⊨ᵇ_ : (k : struct) -> W k -> formula -> 𝔹
--- S , s ⊨ᵇ var x = V S x s
--- S , s ⊨ᵇ Truee = tt
--- S , s ⊨ᵇ And ϕ ϕ₁ = S , s ⊨ᵇ ϕ && S , s ⊨ᵇ ϕ₁
--- S , s ⊨ᵇ Or ϕ ϕ₁ = S , s ⊨ᵇ ϕ || S , s ⊨ᵇ ϕ₁
--- S , s ⊨ᵇ ⋄ x ϕ = {!   !}
--- S , s ⊨ᵇ □ x ϕ with ( ∀ (t : W S ) → ( R S ) s x t ≡ tt )
--- ...         | tt ( ∀ (t : W S ) → ( R S ) s x t ≡ tt ) = ?
--- ...         | ff ( ∀ (t : W S ) → ( R S ) s x t ≡ tt ) = ?
-
-
---Nawiasy do sprawdzenia we wszystkich ≣ !!!
-
 data _,_≣'_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
     proof≣' : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ( ∀ ( ϕ : formula ) → S , s ⊨ ϕ → S' , s' ⊨ ϕ ) → S , s ≣' S' , s'
 
@@ -80,6 +67,7 @@ postulate
     ≣'reverse2 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S' , s' ≣' S , s → ∀ ( ϕ : formula ) → S' , s' ⊨ ϕ
     ⊨reverse : ( S : struct ) → ( s : W S ) → ( p : string ) → S , s ⊨ var p → ( V S ) p s ≡ tt
     ⊨reverse□ : ( S : struct ) → ( s : W S ) → (d : D) → ( p : string ) → S , s ⊨ □ d ( var p ) → (t : W S ) → ( R S ) s d t ≡ tt → S , t ⊨ ( var p )
+    ∈Z : (S S' : struct) → (s : W S) → (s' : W S') → (d : D) → (Z : List ( (W S) × (W S') )) → S , s ≣ S' , s' → (t : W S) → ( R S ) s d t ≡ tt → (t' : W S') → ( R S' ) s' d t' ≡ tt → (t , t') ∈ Z 
 
 
 data _,_prop1_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
@@ -91,36 +79,42 @@ data _,_prop_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S
 data _,_forth_,_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → Set where
     prooff : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ( ∀ (t : W S ) → ( R S ) s d t ≡ tt → ((t' : W S' ) → ( R S' ) s' d t' ≡ tt  → (t , t') ∈ Z )) → S , s forth S' , s' , Z
 
--- data _,_forth_ :  (S S' : struct) → (Z : List ( W S × W S')) → Set where
---     prooff : ( S S' : struct ) → (Z : List ( (W S) × (W S') )) → ∀ ((s , s') ∈ Z) → (d : D) → ∀ (t , b) ∈ Z → S , S' forth Z
-
 data _,_back_,_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → Set where
     proofb : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ (d : D) → ( ∀ (t' : W S' ) → ( R S' ) s' d t' ≡ tt → (t : W S ) → ( R S ) s d t ≡ tt → (t , t') ∈ Z ) → S , s back S' , s' , Z
 
-data  _,_↔_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
-    proof↔ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → ∀ ( p : string ) → (Z : List ( (W S) × (W S') )) → S , s prop S' , s' → S , s forth S' , s' , Z → S , s back S' , s' , Z → S , s ↔ S' , s'
+data  _,_↔_,_,_ : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → Set where
+    proof↔ : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → ∀ ( p : string ) → S , s prop S' , s' → S , s forth S' , s' , Z → S , s back S' , s' , Z → S , s ↔ S' , s' , Z
 
 
 --Dowód w "←" stronę
 --A
 ←H-M_theorem_prop : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → S , s ≣ S' , s' → S , s prop S' , s'
-←H-M_theorem_prop = λ S s S' s' x → proofp S S' s s' "p" (proofp1 S S' s s' "p" ( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ) (( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ))) ((proofp1 S' S s' s "p" ( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ) (( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ))))
+←H-M_theorem_prop = λ S s S' s' x → 
+    proofp S S' s s' "p" (proofp1 S S' s s' "p" ( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) )
+    (( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ))) 
+    ((proofp1 S' S s' s "p" ( ⊨reverse S' s' "p" ( ≣'reverse2 S S' s s' ( ≣→≣'2 S s S' s' x )  (var "p") ) ) 
+    (( ⊨reverse S s "p" ( ≣'reverse1 S S' s s' ( ≣→≣'1 S s S' s' x )  (var "p") ) ))))
 
 --B
-lemma_B : (S S' : struct) → (s : W S) → (s' : W S') → (d : D) → ∀ (ϕ : formula) →  S , s ≣ S' , s' → (t : W S) → ( R S ) s d t ≡ tt → (t' : W S') → ( R S' ) s' d t' ≡ tt → S , t prop S' , t'
-lemma_B = λ S S' s s' d ϕ x t x₁ t' x₂ → proofp S S' t t' "p" (proofp1 S S' t t' "p"  (⊨reverse S t "p" (⊨reverse□ S s d "p" (≣'reverse1 S S' s s' (≣→≣'1 S s S' s' x) (□ d (var "p"))) t x₁)) ((⊨reverse S' t' "p" (⊨reverse□ S' s' d "p" (≣'reverse2 S S' s s' (≣→≣'2 S s S' s' x) (□ d (var "p"))) t' x₂)))) (proofp1 S' S t' t "p" (⊨reverse S' t' "p" (⊨reverse□ S' s' d "p" (≣'reverse2 S S' s s' (≣→≣'2 S s S' s' x) (□ d (var "p"))) t' x₂)) ((⊨reverse S t "p" (⊨reverse□ S s d "p" (≣'reverse1 S S' s s' (≣→≣'1 S s S' s' x) (□ d (var "p"))) t x₁))))
-
 ←H-M_theorem_forth : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → S , s ≣ S' , s' → S , s forth S' , s' , Z
-←H-M_theorem_forth = λ S s S' s' Z x → prooff S S' s s' Z d (λ t x₁ t' x₂ → {!   !})
+←H-M_theorem_forth = λ S s S' s' Z x → prooff S S' s s' Z d (λ t x₁ t' x₂ → ∈Z S S' s s' d Z x t x₁ t' x₂)
 
 --C
 ←H-M_theorem_back : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( W S × W S')) → S , s ≣ S' , s' → S , s back S' , s' , Z
-←H-M_theorem_back = λ S s S' s' Z x →  proofb S S' s s' Z d λ t' x₁ t x₂ → {!   !} 
+←H-M_theorem_back = λ S s S' s' Z x →  proofb S S' s s' Z d λ t' x₁ t x₂ → ∈Z S S' s s' d Z x t x₂ t' x₁ 
 
 
---Dowód w "→" stronę
-→H-M_theorem : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → S , s ↔ S' , s' → S , s ≣ S' , s'
-→H-M_theorem = λ S s S' s' x → proof≣ S S' s s' (λ ϕ x₁ → proof≣' S' S s' s λ ϕ₁ x₂ → ≣'reverse1 S S' s s' x₁ ϕ₁)
+-- Twierdzenie Hennessy-Milnera w "→" stronę
+→H-M_theorem : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → S , s ↔ S' , s' , Z → S , s ≣ S' , s'
+→H-M_theorem = λ S s S' s' Z x → proof≣ S S' s s' (λ ϕ x₁ → proof≣' S' S s' s λ ϕ₁ x₂ → ≣'reverse1 S S' s s' x₁ ϕ₁)
+
+
+-- Twierdzenie Hennessy-Milnera w "←" stronę
+
+←H-M_theorem : (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → (Z : List ( (W S) × (W S') )) → S , s ≣ S' , s' → S , s ↔ S' , s' , Z
+←H-M_theorem = λ S s S' s' Z x → proof↔ S S' s s' Z "p" (←H-M_theorem_prop S s S' s' x) (←H-M_theorem_forth S s S' s' Z x) (←H-M_theorem_back S s S' s' Z x)
+
+
 
 module ⊨-example1 where
 
@@ -251,4 +245,4 @@ module ⊨-example2 where
 
     _ : S , w3 ⊨ Or ( And (var "p") (var "q") ) ( And (var "q") (var "r") )
     _ = proofOr2 S w3 (And (var "p") (var "q")) (And (var "q") (var "r")) (proofAnd S w3 (var "q") (var "r") (proofvar S w3 "q" refl) (proofvar S w3 "r" refl))
- 
+  
