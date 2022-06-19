@@ -55,12 +55,6 @@ All? P? (x ∷ xs) with P? x   | All? P? xs
 ...                 | _      | no ¬Pxs     =  no λ{ (Px ∷ Pxs) → ¬Pxs Pxs }
 
 
--- Any? : ∀ {A : Set} {P : A → Set} → Decidable P → Decidable (Any P)
--- Any? P? here                                 =  yes here
--- Any? P? (x ∷ xs) with P? x   | Any? P? xs
--- ...                 | yes Px | yes Pxs     =  yes (Px ∷ Pxs)
--- ...                 | no ¬Px | _           =  no λ{ (Px ∷ Pxs) → ¬Px Px   }
--- ...                 | _      | no ¬Pxs     =  no λ{ (Px ∷ Pxs) → ¬Pxs Pxs }
 
 {-# BUILTIN LIST List #-}
 
