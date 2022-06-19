@@ -29,13 +29,14 @@ record struct : Set1 where
 open struct
 
 
---definicja formuł
+--definicja formuł (celowo używamy or zamiast ∨, żeby nie prowadziło do pomyłek z literą V)
 data formula : Set where  
     var : string → formula 
     varneq : string → formula 
-    Truee : formula 
-    And : formula → formula → formula 
-    Or : formula → formula → formula 
+    ⊤ : formula 
+    ⊥ : formula
+    _and_ : formula → formula → formula 
+    _or_ : formula → formula → formula 
     ⋄ : D → formula → formula 
     □ : D → formula → formula 
 
@@ -44,10 +45,10 @@ data formula : Set where
 data _,_⊨_ : (k : struct) -> W k -> formula -> Set where
     proofvar : ( k : struct ) → ( s : W k ) → ( p : string ) → ( V k ) p s ≡ tt → k , s ⊨ var p
     proofvarneq : ( k : struct ) → ( s : W k ) → ( p : string ) → ( V k ) p s ≡ ff → k , s ⊨ varneq p 
-    proofTruee : ( k : struct ) → ( s : W k ) → k , s ⊨ Truee
-    proofAnd : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ ψ → k , s ⊨ And ϕ ψ
-    proofOr1 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ Or ϕ ψ
-    proofOr2 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ψ → k , s ⊨ Or ϕ ψ
+    proof⊤ : ( k : struct ) → ( s : W k ) → k , s ⊨ ⊤
+    proofand : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ ψ → k , s ⊨ ( ϕ and ψ )
+    proofOr1 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ϕ → k , s ⊨ ( ϕ or ψ )
+    proofOr2 : ( k : struct ) → ( s : W k ) → ( ϕ ψ : formula ) → k , s ⊨ ψ → k , s ⊨ ( ϕ or ψ )
     proof⋄ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → ( t : W k ) → ( R k ) s d t ≡ tt →  k , t ⊨ ϕ →  k , s ⊨ ⋄ d ϕ
     proof□ : ( k : struct ) → ( s : W k ) → ( ϕ : formula ) → ( d : D ) → ( ∀ ( t : W k ) → ( R k ) s d t ≡ tt → k , t ⊨ ϕ ) → k , s ⊨ □ d ϕ 
 
@@ -71,6 +72,8 @@ postulate
     ≣'reverse2 : ( S S' : struct ) → ( s : W S ) → ( s' : W S' ) → S' , s' ≣' S , s → ( ϕ : formula ) → S' , s' ⊨ ϕ
     ⊨reverse : ( S : struct ) → ( s : W S ) → ( p : string ) → S , s ⊨ var p → ( V S ) p s ≡ tt
     ∈Z : (S S' : struct) → (s : W S) → (s' : W S') → (d : D) → (Z : List ( (W S) × (W S') ) ) → S , s ≣ S' , s' → (t : W S) → ( R S ) s d t ≡ tt → (t' : W S') → ( R S' ) s' d t' ≡ tt → (t , t') ∈ Z 
+
+
 
 --definicja bisymulacji
 data _,_prop1_,_ :  (S : struct) → ( s : W S ) → (S' : struct) → ( s' : W S' ) → Set where
@@ -158,13 +161,13 @@ module ⊨-example1 where
     _ : S , w1 ⊨ (varneq "p")
     _ = proofvarneq S w1 "p" refl
 
-    _ : S , w0 ⊨ Truee
-    _ = proofTruee S w0
+    _ : S , w0 ⊨ ⊤
+    _ = proof⊤ S w0
 
-    _ : S , w2 ⊨ And (var "p") (var "q")
-    _ = proofAnd S w2 (var "p") (var "q") (proofvar S w2 "p" refl) (proofvar S w2 "q" refl)
+    _ : S , w2 ⊨ ((var "p") and (var "q"))
+    _ = proofand S w2 (var "p") (var "q") (proofvar S w2 "p" refl) (proofvar S w2 "q" refl)
 
-    _ : S , w0 ⊨ Or (var "p") (var "q")
+    _ : S , w0 ⊨ ((var "p") or (var "q"))
     _ = proofOr1 S w0 (var "p") (var "q") (proofvar S w0 "p" refl) 
 
     _ : S , w2 ⊨ ⋄ d (var "p")
@@ -237,11 +240,11 @@ module ⊨-example2 where
     S = record { W = World ; R = Rel ; V = Val }
 
     --Dowody wybranych własności
-    _ : S , w0 ⊨ Or (var "p") (var "q")
+    _ : S , w0 ⊨ ((var "p") or (var "q"))
     _ = proofOr1 S w0 (var "p") (var "q")  (proofvar S w0 "p" refl)
 
-    _ : S , w1 ⊨ And (⋄ d (var "q")) (var "q")
-    _ = proofAnd S w1 (⋄ d (var "q")) (var "q") (proof⋄ S w1 (var "q") d w2 refl 
+    _ : S , w1 ⊨ ((⋄ d (var "q")) and (var "q"))
+    _ = proofand S w1 (⋄ d (var "q")) (var "q") (proof⋄ S w1 (var "q") d w2 refl 
         (proofvar S w2 "q" refl)) (proofvar S w1 "q" refl)
 
 
@@ -254,6 +257,6 @@ module ⊨-example2 where
     _ : S , w4 ⊨ □ d (var "p")
     _ = proof□ S w4 (var "p") d λ t x → proofvar S t "p" (lemma t x)
 
-    _ : S , w3 ⊨ Or ( And (var "p") (var "q") ) ( And (var "q") (var "r") )
-    _ = proofOr2 S w3 (And (var "p") (var "q")) (And (var "q") (var "r")) (proofAnd S w3 (var "q") (var "r") (proofvar S w3 "q" refl) (proofvar S w3 "r" refl))
+    _ : S , w3 ⊨ (((var "p") and (var "q") ) or ( (var "q") and (var "r")))
+    _ = proofOr2 S w3 ((var "p") and (var "q")) ((var "q") and (var "r")) (proofand S w3 (var "q") (var "r") (proofvar S w3 "q" refl) (proofvar S w3 "r" refl))
   
