@@ -17,7 +17,7 @@ postulate
 {-# BUILTIN STRING string #-}
 
 
---Zbiór D - będziemy przyjmować że jest jednoelementowy
+--Zbiór D - będziemy przyjmować, że jest jednoelementowy
 data D : Set where
     d : D 
     
@@ -236,6 +236,7 @@ module ⊨-example2 where
     S : struct
     S = record { W = World ; R = Rel ; V = Val }
 
+    --Dowody wybranych własności
     _ : S , w0 ⊨ Or (var "p") (var "q")
     _ = proofOr1 S w0 (var "p") (var "q")  (proofvar S w0 "p" refl)
 
